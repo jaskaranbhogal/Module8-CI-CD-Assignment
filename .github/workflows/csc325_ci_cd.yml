@@ -1,0 +1,72 @@
+name: CSC325 - First CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - "feature/**"
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  setup:
+    name: Setup
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+      - name: Install Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Print Python version
+        run: python --version
+
+  dependencies:
+    name: Dependencies
+    needs: setup
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install packages
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip check
+
+  test:
+    name: Test
+    needs: dependencies
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install packages (jobs use separate runners)
+        run: python -m pip install -r requirements.txt
+      - name: Django system check
+        run: python manage.py check
+      - name: Run all automated tests
+        run: python manage.py test --verbosity 2
+
+  deploy:
+    name: Deploy
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Simulated deployment
+        run: |
+          echo "Tests passed and deployment gate opened."
+          echo "Simulated deployment successful (no Render or live hosting required)."
+          echo "Note: This is an echo-based assignment demonstration, not a live app."
