@@ -64,9 +64,32 @@ jobs:
     needs: test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Simulated deployment
+      - name: Check out tested code
+        uses: actions/checkout@v7
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Build Pages snapshot from Django API
         run: |
-          echo "Tests passed and deployment gate opened."
-          echo "Simulated deployment successful (no Render or live hosting required)."
-          echo "Note: This is an echo-based assignment demonstration, not a live app."
+          python -m pip install -r requirements.txt
+          python manage.py migrate --noinput
+          python scripts/build_pages.py
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
