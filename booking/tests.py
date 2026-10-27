@@ -30,3 +30,9 @@ class RoomAPITests(TestCase):
     def test_unknown_room_returns_404(self):
         response = self.client.get(reverse("room-detail", args=[9999]))
         self.assertEqual(response.status_code, 404)
+
+    def test_status_endpoint_reports_ok(self):
+        response = self.client.get(reverse("api-status"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["service"], "study-room-booking")
+        self.assertEqual(response.data["status"], "ok")
